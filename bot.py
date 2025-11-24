@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
 # Bot tokenini environment variable dan olamiz
-BOT_TOKEN = "8226993737:AAErIjCoq80NhvBsXr0nMbMMKWLBXSoaAD4"
+BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
 # Admin ID sini environment variable dan olamiz
 ADMIN_ID = "7800649803"

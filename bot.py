@@ -9,7 +9,7 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
 # Admin ID sini environment variable dan olamiz
-ADMIN_ID = "7800649803"
+ADMIN_ID = 7800649803
 
 # Ma'lumotlarni saqlash uchun
 DATA_FILE = "bot_data.json"

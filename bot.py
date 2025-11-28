@@ -5,11 +5,11 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-# Bot tokenini environment variable dan olamiz
+# Bot tokenini o'rnating
 BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
-# Admin ID sini environment variable dan olamiz
-ADMIN_ID = 7800649803
+# Admin ID sini o'rnating (o'zingizning Telegram ID ingiz)
+ADMIN_ID = 7800649803,8389368712  # O'z ID ingizni qo'ying
 
 # Ma'lumotlarni saqlash uchun
 DATA_FILE = "bot_data.json"
@@ -25,17 +25,12 @@ def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
+            # Eski versiyalar bilan moslik
             if "videos" not in data:
                 data["videos"] = []
-            for video in data["videos"]:
-                if "code" not in video:
-                    video["code"] = "eski_kod"
-                if "used_by" not in video:
-                    video["used_by"] = []
-                if "caption" not in video:
-                    video["caption"] = ""
             return data
     except:
+        # Fayl yo'q yoki xato bo'lsa
         return {
             "videos": []
         }
@@ -74,12 +69,10 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     video_file = update.message.video
     if video_file:
-        # Video caption (tagidagi yozuv) ni olish
-        caption = update.message.caption or ""
-        
         # Video ma'lumotlarini saqlash
         data = load_data()
         
+        # Kod so'raymiz
         await update.message.reply_text(
             "📹 Video qabul qilindi!\n"
             "🔐 Ushbu video uchun kodni yuboring:"
@@ -90,8 +83,7 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "file_id": video_file.file_id,
             "file_unique_id": video_file.file_unique_id,
             "file_size": video_file.file_size,
-            "timestamp": datetime.now().isoformat(),
-            "caption": caption
+            "timestamp": datetime.now().isoformat()
         }
 
 # Kod qabul qilish va videoni saqlash
@@ -128,7 +120,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"✅ Video #{new_video['video_number']} muvaffaqiyatli saqlandi!\n"
             f"📹 Kod: {user_input}\n"
-            f"📝 Caption: {new_video['caption'][:50]}{'...' if len(new_video['caption']) > 50 else ''}\n"
             f"📊 Jami videolar: {len(data['videos'])} ta"
         )
         return
@@ -136,7 +127,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Agar admin bo'lsa lekin video kutilayotgan bo'lmasa
     if user_id == ADMIN_ID:
         await update.message.reply_text(
-            "ℹ️ Video yuklash uchun avval video yuboring, keyin kod berasiz."
+            "ℹ️ Video yuklash uchun avval video yuboring, keyin kod beraman."
         )
         return
     
@@ -148,28 +139,22 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Kodni tekshiramiz
     found_video = None
     for video in data["videos"]:
-        if "code" in video and video["code"] == user_input:
+        if video["code"] == user_input:
             found_video = video
             break
     
     if found_video:
         # Foydalanuvchini ro'yxatga olish
         user_info = f"{update.effective_user.first_name} (ID: {user_id})"
-        if "used_by" not in found_video:
-            found_video["used_by"] = []
         if user_info not in found_video["used_by"]:
             found_video["used_by"].append(user_info)
             save_data(data)
         
-        # Videoni yuborish - CAPTION bilan
+        # Videoni yuborish
         try:
-            caption_text = f"🎉 Video #{found_video['video_number']} ochildi!"
-            if found_video.get('caption'):
-                caption_text += f"\n\n{found_video['caption']}"
-            
             await update.message.reply_video(
                 video=found_video["file_id"],
-                caption=caption_text
+                caption=f"🎉 Video #{found_video['video_number']} ochildi!\n🔐 Kod: {found_video['code']}"
             )
         except Exception as e:
             await update.message.reply_text(f"❌ Video yuborishda xatolik: {str(e)}")
@@ -193,23 +178,9 @@ async def handle_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "📋 Videolar ro'yxati:\n\n"
     for video in data["videos"]:
         message += f"#{video['video_number']} - Kod: {video['code']}\n"
-        if video.get('caption'):
-            message += f"   Yozuv: {video['caption'][:30]}{'...' if len(video['caption']) > 30 else ''}\n"
-        message += f"   Foydalanuvchilar: {len(video.get('used_by', []))} ta\n\n"
+        message += f"   Foydalanuvchilar: {len(video['used_by'])} ta\n\n"
     
     await update.message.reply_text(message)
-
-# Admin uchun barcha videolarni o'chirish
-async def handle_clear(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    
-    if user_id != ADMIN_ID:
-        await update.message.reply_text("❌ Siz admin emassiz!")
-        return
-    
-    data = {"videos": []}
-    save_data(data)
-    await update.message.reply_text("✅ Barcha videolar o'chirildi!")
 
 # Boshqa turdagi xabarlar
 async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -217,11 +188,9 @@ async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if user_id == ADMIN_ID:
         await update.message.reply_text(
-            "ℹ️ Admin komandalari:\n"
+            "ℹ️ Admin:\n"
             "• Video yuboring - yangi video qo'shish\n"
             "• /list - videolar ro'yxati\n"
-            "• /clear - barcha videolarni o'chirish\n"
-            "• Video tashlaganda tagiga yozuv yozishingiz mumkin\n"
             "• Har bir video uchun alohida kod berasiz"
         )
     else:
@@ -230,12 +199,6 @@ async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Xatolik handler
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.error("Xatolik yuz berdi:", exc_info=context.error)
-    try:
-        data = load_data()
-        save_data(data)
-        logging.info("JSON fayl to'g'rilandi")
-    except Exception as e:
-        logging.error(f"Faylni to'g'rilashda xatolik: {e}")
 
 def main():
     # Botni yaratish
@@ -245,12 +208,10 @@ def main():
     data = load_data()
     save_data(data)
     print("✅ JSON fayl to'g'rilandi")
-    print(f"🤖 Bot ishga tushdi! Admin ID: {ADMIN_ID}")
 
     # Handlerlar
     application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/start"), handle_start))
     application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/list"), handle_list))
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/clear"), handle_clear))
     application.add_handler(MessageHandler(filters.VIDEO, handle_video))
     application.add_handler(MessageHandler(filters.TEXT, handle_text))
     application.add_handler(MessageHandler(filters.ALL, handle_other))
@@ -259,7 +220,7 @@ def main():
     application.add_error_handler(error_handler)
 
     # Botni ishga tushirish
-    print("🚀 Bot Railwayda ishga tushdi! 24/7 ishlaydi.")
+    print("🤖 Bot ishga tushdi!")
     application.run_polling()
 
 if __name__ == "__main__":

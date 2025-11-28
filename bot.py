@@ -9,7 +9,7 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
 # Admin ID sini o'rnating (o'zingizning Telegram ID ingiz)
-ADMIN_ID = 7800649803,8389368712  # O'z ID ingizni qo'ying
+ADMIN_ID = [7800649803,8389368712]  # O'z ID ingizni qo'ying
 
 # Ma'lumotlarni saqlash uchun
 DATA_FILE = "bot_data.json"

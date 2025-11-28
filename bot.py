@@ -8,8 +8,8 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 # Bot tokenini o'rnating
 BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
-# Admin ID sini o'rnating (o'zingizning Telegram ID ingiz)
-ADMIN_ID = [7800649803,8389368712]  # O'z ID ingizni qo'ying
+# Admin ID lar ro'yxati (bir nechta admin)
+ADMIN_IDS = [7800649803, 8389368712]   # 2 ta admin qo'yilgan, xohlasang yana qo'sh
 
 # Ma'lumotlarni saqlash uchun
 DATA_FILE = "bot_data.json"
@@ -25,26 +25,22 @@ def load_data():
     try:
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
-            # Eski versiyalar bilan moslik
             if "videos" not in data:
                 data["videos"] = []
             return data
     except:
-        # Fayl yo'q yoki xato bo'lsa
-        return {
-            "videos": []
-        }
+        return {"videos": []}
 
 # Ma'lumotlarni saqlash
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f, indent=2)
 
-# Start xabarini qayta ishlash
+# Start komandasi
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
-    if user_id == ADMIN_ID:
+    if user_id in ADMIN_IDS:
         data = load_data()
         video_count = len(data["videos"])
         await update.message.reply_text(
@@ -54,31 +50,24 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔐 Har bir video uchun alohida kod berasiz"
         )
     else:
-        await update.message.reply_text(
-            "👋 Salom!\n"
-            "Video ko'rish uchun kod yuboring."
-        )
+        await update.message.reply_text("👋 Salom!\nVideo ko'rish uchun kod yuboring.")
 
-# Videolarni qayta ishlash
+# Video qabul qilish
 async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         await update.message.reply_text("❌ Faqat admin video yuklay oladi!")
         return
     
     video_file = update.message.video
     if video_file:
-        # Video ma'lumotlarini saqlash
-        data = load_data()
-        
-        # Kod so'raymiz
+
         await update.message.reply_text(
             "📹 Video qabul qilindi!\n"
             "🔐 Ushbu video uchun kodni yuboring:"
         )
         
-        # Foydalanuvchi kontekstiga video ma'lumotlarini saqlaymiz
         context.user_data["pending_video"] = {
             "file_id": video_file.file_id,
             "file_unique_id": video_file.file_unique_id,
@@ -86,140 +75,115 @@ async def handle_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "timestamp": datetime.now().isoformat()
         }
 
-# Kod qabul qilish va videoni saqlash
+# Kod qabul qilish
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_input = update.message.text
-    
     data = load_data()
-    
-    # Agar admin bo'lsa va video kutilayotgan bo'lsa
-    if user_id == ADMIN_ID and "pending_video" in context.user_data:
+
+    # ADMIN KOD KIRITISH BLOKI
+    if user_id in ADMIN_IDS and "pending_video" in context.user_data:
         video_data = context.user_data["pending_video"]
-        
-        # Kod takrorlanmasligini tekshiramiz
+
         for video in data["videos"]:
             if video["code"] == user_input:
-                await update.message.reply_text("❌ Bu kod allaqachon mavjud! Boshqa kod yuboring:")
+                await update.message.reply_text("❌ Bu kod bor! Yangi kod yuboring.")
                 return
-        
-        # Yangi videoni saqlaymiz
+
         new_video = {
             **video_data,
             "code": user_input,
             "video_number": len(data["videos"]) + 1,
             "used_by": []
         }
-        
+
         data["videos"].append(new_video)
         save_data(data)
-        
-        # Foydalanuvchi kontekstini tozalaymiz
+
         del context.user_data["pending_video"]
-        
+
         await update.message.reply_text(
-            f"✅ Video #{new_video['video_number']} muvaffaqiyatli saqlandi!\n"
-            f"📹 Kod: {user_input}\n"
-            f"📊 Jami videolar: {len(data['videos'])} ta"
+            f"✅ Video #{new_video['video_number']} saqlandi!\n"
+            f"🔐 Kod: {user_input}"
         )
         return
-    
-    # Agar admin bo'lsa lekin video kutilayotgan bo'lmasa
-    if user_id == ADMIN_ID:
-        await update.message.reply_text(
-            "ℹ️ Video yuklash uchun avval video yuboring, keyin kod beraman."
-        )
+
+    # Admin lekin video kutmayotgan bo'lsa
+    if user_id in ADMIN_IDS:
+        await update.message.reply_text("ℹ️ Avval video yuboring.")
         return
-    
-    # Agar oddiy foydalanuvchi bo'lsa - kod tekshirish
-    if not data["videos"]:
-        await update.message.reply_text("📹 Hozircha videolar mavjud emas!")
-        return
-    
-    # Kodni tekshiramiz
+
+    # FOYDALANUVCHI KOD YUBORSA
     found_video = None
     for video in data["videos"]:
         if video["code"] == user_input:
             found_video = video
             break
-    
+
     if found_video:
-        # Foydalanuvchini ro'yxatga olish
         user_info = f"{update.effective_user.first_name} (ID: {user_id})"
         if user_info not in found_video["used_by"]:
             found_video["used_by"].append(user_info)
             save_data(data)
-        
-        # Videoni yuborish
+
         try:
             await update.message.reply_video(
                 video=found_video["file_id"],
-                caption=f"🎉 Video #{found_video['video_number']} ochildi!\n🔐 Kod: {found_video['code']}"
+                caption=f"🎉 Video #{found_video['video_number']} ochildi!"
             )
         except Exception as e:
-            await update.message.reply_text(f"❌ Video yuborishda xatolik: {str(e)}")
+            await update.message.reply_text(f"❌ Xato: {str(e)}")
     else:
-        await update.message.reply_text("❌ Noto'g'ri kod! Qayta urinib ko'ring.")
+        await update.message.reply_text("❌ Noto'g'ri kod!")
 
-# Admin uchun videolar ro'yxati
+# Admin uchun ro‘yxat
 async def handle_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
-    if user_id != ADMIN_ID:
+    if user_id not in ADMIN_IDS:
         await update.message.reply_text("❌ Siz admin emassiz!")
         return
     
     data = load_data()
-    
-    if not data["videos"]:
-        await update.message.reply_text("📹 Hozircha videolar yo'q")
-        return
-    
-    message = "📋 Videolar ro'yxati:\n\n"
-    for video in data["videos"]:
-        message += f"#{video['video_number']} - Kod: {video['code']}\n"
-        message += f"   Foydalanuvchilar: {len(video['used_by'])} ta\n\n"
-    
-    await update.message.reply_text(message)
 
-# Boshqa turdagi xabarlar
+    if not data["videos"]:
+        await update.message.reply_text("📹 Hozircha video yo‘q")
+        return
+
+    msg = "📋 Videolar ro'yxati:\n\n"
+    for video in data["videos"]:
+        msg += f"#{video['video_number']} - Kod: {video['code']}\n"
+        msg += f"Foydalanganlar: {len(video['used_by'])} ta\n\n"
+
+    await update.message.reply_text(msg)
+
+# Boshqa xabarlar
 async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    
-    if user_id == ADMIN_ID:
-        await update.message.reply_text(
-            "ℹ️ Admin:\n"
-            "• Video yuboring - yangi video qo'shish\n"
-            "• /list - videolar ro'yxati\n"
-            "• Har bir video uchun alohida kod berasiz"
-        )
+    if user_id in ADMIN_IDS:
+        await update.message.reply_text("ℹ️ Admin: Video yuboring yoki /list bosing.")
     else:
-        await update.message.reply_text("ℹ️ Video ko'rish uchun kod yuboring")
+        await update.message.reply_text("ℹ️ Video ko‘rish uchun kod yuboring.")
 
-# Xatolik handler
+# Xatolik
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logging.error("Xatolik yuz berdi:", exc_info=context.error)
+    logging.error("Xatolik:", exc_info=context.error)
 
 def main():
-    # Botni yaratish
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Avval JSON faylni to'g'rilab olamiz
     data = load_data()
     save_data(data)
-    print("✅ JSON fayl to'g'rilandi")
+    print("✅ JSON tayyor")
 
-    # Handlerlar
     application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/start"), handle_start))
     application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^/list"), handle_list))
     application.add_handler(MessageHandler(filters.VIDEO, handle_video))
     application.add_handler(MessageHandler(filters.TEXT, handle_text))
     application.add_handler(MessageHandler(filters.ALL, handle_other))
-    
-    # Xatolik handler
+
     application.add_error_handler(error_handler)
 
-    # Botni ishga tushirish
     print("🤖 Bot ishga tushdi!")
     application.run_polling()
 

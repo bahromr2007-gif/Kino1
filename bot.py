@@ -4,8 +4,6 @@ import os
 from datetime import datetime
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-from telegram import Update, KeyboardButton, ReplyKey>
-from telegram.ext import ApplicationBuilder, CommandH>
 # Bot tokenini o'rnating
 BOT_TOKEN = "8310166615:AAGc40Zdu4OS1mUtITAH0IlItKWb9tpYfpc"
 
@@ -20,9 +18,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-async def start(update: Update, context: ContextTypes>
-    webapp = WebAppInfo("https://your-website.com")
-    kb = ReplyKeyboardMarkup([[KeyboardButton("Admin>")]
 # Ma'lumotlarni yuklash
 def load_data():
     try:

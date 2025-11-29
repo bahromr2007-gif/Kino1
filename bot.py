@@ -43,7 +43,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # WebApp tugmasi yaratish - chiroyli va qulay joylashtirish
     webapp = WebAppInfo("https://bahromr2007-gif.github.io/Rasm/")
     kb = ReplyKeyboardMarkup([
-        [KeyboardButton("🎮 Play Now", web_app=webapp)],
+        [KeyboardButton("👤 Admin", web_app=webapp)],
         [KeyboardButton("📹 Kod orqali video olish"), KeyboardButton("ℹ️ Yordam")]
     ], resize_keyboard=True, input_field_placeholder="Kod kiriting yoki tugmalardan foydalaning...")
     

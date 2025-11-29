@@ -55,14 +55,14 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"📹 Video yuklash uchun video yuboring\n"
             f"📊 Jami videolar: {video_count} ta\n"
             f"🔐 Har bir video uchun alohida kod berasiz\n\n"
-            f"🎮 Quyidagi tugmalar orqali ham foydalanishingiz mumkin:",
+            f"👤 Quyidagi tugmalar orqali ham foydalanishingiz mumkin:",
             reply_markup=kb
         )
     else:
         await update.message.reply_text(
             "👋 Salom! Botga xush kelibsiz!\n\n"
             "📹 Video ko'rish uchun kod yuboring yoki\n"
-            "🎮 Play Now tugmasi bilan web ilovani oching\n\n"
+            "👤 Admin panelini oching\n\n"
             "Quyidagi tugmalardan foydalaning:",
             reply_markup=kb
         )
@@ -86,7 +86,7 @@ async def handle_help_button(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "1. Video faylini yuboring\n"
             "2. Taklif qilingan kodni kiriting\n\n"
             "📋   Ro'yxatni ko'rish:   /list\n"
-            "🎮   Play tugmasi:   Web ilovani ochish\n\n"
+            "👤   Admin:  panelini ochish\n\n"
             "📊   Statistika:   Har bir video qancha marta ishlatilganligini ko'rasiz"
         )
     else:
@@ -95,10 +95,10 @@ async def handle_help_button(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "📹   Video ko'rish:  \n"
             "1. 'Kod orqali video olish' tugmasini bosing\n"
             "2. Video kodini kiriting\n\n"
-            "🎮   Play Now:   Web ilovani ochish\n"
+            "👤   Admin:   panelini ochish\n"
             "ℹ️   Yordam:   Bu sahifani ko'rish\n\n"
             "🔐   Kodni qayerdan olaman?  \n"
-            "Video kodini adminlar beradi"
+            "https://www.instagram.com/kino_multfilm_?igsh=MW93bjdydjNxMGM3Ng=="
         )
     
     await update.message.reply_text(help_text)
@@ -229,7 +229,7 @@ async def handle_other(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Klaviatura yaratish
     webapp = WebAppInfo("https://your-website.com")
     kb = ReplyKeyboardMarkup([
-        [KeyboardButton("🎮 Play Now", web_app=webapp)],
+        [KeyboardButton("👤 admin", web_app=webapp)],
         [KeyboardButton("📹 Kod orqali video olish"), KeyboardButton("ℹ️ Yordam")]
     ], resize_keyboard=True)
     

@@ -22,7 +22,7 @@ logging.basicConfig(
 )
 async def start(update: Update, context: ContextTypes>
     webapp = WebAppInfo("https://your-website.com")
-    kb = ReplyKeyboardMarkup([[KeyboardButton("Admin>
+    kb = ReplyKeyboardMarkup([[KeyboardButton("Admin>")]
 # Ma'lumotlarni yuklash
 def load_data():
     try:
